@@ -692,7 +692,7 @@ namespace CustomCommunityCentre
 					(__instance, "areaToBundleDictionary")
 					.GetValue();
 
-				__instance.missedRewardsChest.Value.items.Clear();
+				__instance.missedRewardsChest.Value.Items.Clear();
 
 				bool hasUnclaimedRewards = false;
 				List<Item> rewards = new();
@@ -783,7 +783,7 @@ namespace CustomCommunityCentre
 			CommunityCenter __instance)
 		{
 			Bundles.SetUpJunimosForGoodbyeDance(cc: __instance);
-			List<Junimo> junimos = __instance.getCharacters().OfType<Junimo>().ToList();
+			List<Junimo> junimos = __instance.characters.OfType<Junimo>().ToList();
 			foreach (Junimo junimo in junimos)
 			{
 				junimo.sayGoodbye();

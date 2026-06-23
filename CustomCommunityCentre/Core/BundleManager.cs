@@ -139,9 +139,9 @@ namespace CustomCommunityCentre
 			Random r = new ((int)Game1.uniqueIDForThisGame * 9); // copied from StardewValley.Game1.GenerateBundles(...)
 			if (isLoadingCustomContent)
 			{
-				Helper.Content.InvalidateCache(CustomCommunityCentre.AssetManager.BundleCacheAssetKey); // Farmhand idiocy
+				Helper.GameContent.InvalidateCache(CustomCommunityCentre.AssetManager.BundleCacheAssetKey); // Farmhand idiocy
 				Dictionary<string, string> bundleData = new StardewValley.BundleGenerator().Generate(
-					bundle_data_path: CustomCommunityCentre.AssetManager.BundleCacheAssetKey, // Internal sneaky asset business
+					bundle_data: BundleManager.Parse(), // Internal sneaky asset business
 					rng: r);
 
 				// Add bundle data entries, ignoring existing values for mod compatibility
@@ -175,12 +175,12 @@ namespace CustomCommunityCentre
 			}
 		}
 
-        internal static List<StardewValley.GameData.RandomBundleData> Parse()
+        internal static List<StardewValley.GameData.Bundles.RandomBundleData> Parse()
 		{
-            static List<StardewValley.GameData.BundleData> bundleEntriesToData(Dictionary<string, CustomCommunityCentre.Data.Bundle> entries)
+            static List<StardewValley.GameData.Bundles.BundleData> bundleEntriesToData(Dictionary<string, CustomCommunityCentre.Data.Bundle> entries)
             {
 				return entries
-					.Select(bsd => new StardewValley.GameData.BundleData()
+					.Select(bsd => new StardewValley.GameData.Bundles.BundleData()
 					{
 						Name = bsd.Key,
 						Color = bsd.Value.Colour,
@@ -204,7 +204,7 @@ namespace CustomCommunityCentre
 			int areaSum = Bundles.CustomAreaInitialIndex;
 			int bundleSum = Bundles.CustomBundleInitialIndex;
 
-			List<StardewValley.GameData.RandomBundleData> parsedBundleDefinitions = new();
+			List<StardewValley.GameData.Bundles.RandomBundleData> parsedBundleDefinitions = new();
 			foreach (CustomCommunityCentre.Data.ContentPack contentPack in CustomCommunityCentre.ModEntry.ContentPacks)
 			{
 				foreach (string areaName in contentPack.Definitions.Keys.ToList())
@@ -236,7 +236,7 @@ namespace CustomCommunityCentre
 					}
 
 					// Validate bundles
-					List<StardewValley.GameData.BundleData> bundles =
+					List<StardewValley.GameData.Bundles.BundleData> bundles =
 						// Default bundles
 						bundleEntriesToData(entries: contentPack.Definitions[areaName].BundleSets
 							.SelectMany(dict => dict)
@@ -246,7 +246,7 @@ namespace CustomCommunityCentre
 						.ToList();
 					if (bundles.Any(bundle => bundle?.Name == null))
 					{
-						errorMessage.AppendLine($"Area {areaName} was not loaded: Bundle or {nameof(StardewValley.GameData.BundleData.Name)} was null.");
+						errorMessage.AppendLine($"Area {areaName} was not loaded: Bundle or {nameof(StardewValley.GameData.Bundles.BundleData.Name)} was null.");
 						contentPack.Definitions.Remove(areaName);
 						continue;
 					}
@@ -296,13 +296,13 @@ namespace CustomCommunityCentre
 						.ToArray();
 
 					// Add parsed definition to list
-					StardewValley.GameData.RandomBundleData area = new()
+					StardewValley.GameData.Bundles.RandomBundleData area = new()
 					{
 						AreaName = areaName,
 						Keys = string.Join(" ", bundleNumbers),
 						Bundles = bundleEntriesToData(entries: contentPack.Definitions[areaName].Bundles),
 						BundleSets = contentPack.Definitions[areaName].BundleSets
-							.Select(dict => new StardewValley.GameData.BundleSetData()
+							.Select(dict => new StardewValley.GameData.Bundles.BundleSetData()
 							{
 								Bundles = bundleEntriesToData(entries: dict)
 							})
@@ -357,12 +357,12 @@ namespace CustomCommunityCentre
 						}
 
 						// Find matching bundle for substitute bundle
-						IEnumerable<StardewValley.GameData.BundleData> bundles = parsedBundleDefinitions
+						IEnumerable<StardewValley.GameData.Bundles.BundleData> bundles = parsedBundleDefinitions
 							// Default bundles
 							.SelectMany(rbd => rbd.BundleSets.SelectMany(bd => bd.Bundles))
 							// Random bundles
 							.Concat(parsedBundleDefinitions.SelectMany(rbd => rbd.Bundles));
-						StardewValley.GameData.BundleData bundle = bundles
+						StardewValley.GameData.Bundles.BundleData bundle = bundles
 							.FirstOrDefault(bd => bd.Name == bundleName);
 
 						if (bundle == null)
@@ -396,7 +396,7 @@ namespace CustomCommunityCentre
 
 			// Append custom bundle data to default random bundle data after modifications
 			var randomBundleData = Game1.content.Load
-				<List<StardewValley.GameData.RandomBundleData>>
+				<List<StardewValley.GameData.Bundles.RandomBundleData>>
 				(@"Data/RandomBundles");
 			parsedBundleDefinitions = randomBundleData
 				.Union(parsedBundleDefinitions)
@@ -506,22 +506,22 @@ namespace CustomCommunityCentre
 							int ingredientIndex = ingredient / fields;
 							StardewValley.Menus.BundleIngredientDescription bundleIngredientDescription
 								= new (
-									index: Convert.ToInt32(ingredientsSplit[ingredient]),
+									idOrCategory: ingredientsSplit[ingredient],
 									stack: Convert.ToInt32(ingredientsSplit[ingredient + 1]),
 									quality: Convert.ToInt32(ingredientsSplit[ingredient + 2]),
 									completed: true);
 
 							// Check chest items for use in bundles and repopulate bundle progress data
-							foreach (Item item in chest.items.ToList())
+							foreach (Item item in chest.Items.ToList())
 							{
 								if (item is StardewValley.Object o1
-									&& (o1.ParentSheetIndex == bundleIngredientDescription.index
-										|| (bundleIngredientDescription.index < 0 && o1.Category == bundleIngredientDescription.index))
+									&& (o1.ItemId == bundleIngredientDescription.id
+										|| (bundleIngredientDescription.id is null && o1.Category == bundleIngredientDescription.category))
 									&& o1.Quality >= bundleIngredientDescription.quality
 									&& o1.Stack == bundleIngredientDescription.stack)
 								{
 									ingredientsComplete[ingredientIndex] = true;
-									chest.items.Remove(item);
+									chest.Items.Remove(item);
 									Bundles.CustomBundleDonations.Add(item);
 									break;
 								}
@@ -543,7 +543,7 @@ namespace CustomCommunityCentre
 					chest.clearNulls();
 
 					// Remove chest if empty
-					if (!chest.items.Any(i => i != null))
+					if (!chest.Items.Any(i => i != null))
 					{
 						cc.Objects.Remove(tileLocation);
 					}
@@ -609,12 +609,12 @@ namespace CustomCommunityCentre
 						{
 							// Replace any existing object with this chest
 							Log.I($"Bundle donations safekeeping chest now contains {o.Name}.");
-							chest.items.Add(cc.Objects[tileLocation]);
+							chest.Items.Add(cc.Objects[tileLocation]);
 						}
 						foreach (Item item in Bundles.CustomBundleDonations.ToList())
 						{
 							// Add all bundle donations to the chest
-							chest.items.Add(item);
+							chest.Items.Add(item);
 							Bundles.CustomBundleDonations.Remove(item);
 						}
 						cc.Objects[tileLocation] = chest;

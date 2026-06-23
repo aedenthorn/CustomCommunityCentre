@@ -12,7 +12,6 @@ namespace CustomCommunityCentre
 	{
 		public static CustomCommunityCentre.ModEntry Instance;
 		public static CustomCommunityCentre.Config Config;
-		public static CustomCommunityCentre.AssetManager AssetManager;
 		public static List<CustomCommunityCentre.Data.ContentPack> ContentPacks;
 
 		// Constant values
@@ -35,7 +34,6 @@ namespace CustomCommunityCentre
 		{
 			CustomCommunityCentre.ModEntry.Instance = this;
 			CustomCommunityCentre.ModEntry.Config = helper.ReadConfig<CustomCommunityCentre.Config>();
-			CustomCommunityCentre.ModEntry.AssetManager = new CustomCommunityCentre.AssetManager();
 
 			this.RegisterEvents();
 			this.AddConsoleCommands();
@@ -43,8 +41,6 @@ namespace CustomCommunityCentre
 			string id = this.ModManifest.UniqueID;
 			HarmonyPatches.ApplyHarmonyPatches(id: id);
 
-			helper.Content.AssetLoaders.Add(CustomCommunityCentre.ModEntry.AssetManager);
-			helper.Content.AssetEditors.Add(CustomCommunityCentre.ModEntry.AssetManager);
 		}
 
 		public override object GetApi()
@@ -97,6 +93,7 @@ namespace CustomCommunityCentre
 			this.Helper.Events.GameLoop.SaveLoaded += this.GameLoop_SaveLoaded;
 			this.Helper.Events.GameLoop.DayStarted += this.GameLoop_DayStarted;
 
+			AssetManager.RegisterEvents();
 			BundleManager.RegisterEvents();
 			Bundles.RegisterEvents();
 		}

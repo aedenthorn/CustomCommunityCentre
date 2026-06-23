@@ -156,7 +156,7 @@ namespace CommunityKitchen
 					&& Game1.random.NextDouble() < 0.025f)
 				{
 					this.BounceTimer = (int)this.MaxBounceTime - 1;
-					Game1.getFarm().localSoundAt("dwop", this.position / Game1.tileSize);
+					Game1.getFarm().playSound("dwop", this.position / Game1.tileSize);
 				}
 			}
 			else

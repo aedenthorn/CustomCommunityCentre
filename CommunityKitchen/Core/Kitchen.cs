@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
+using StardewValley.Inventories;
 using StardewValley.Locations;
 using StardewValley.Menus;
 using StardewValley.Network;
@@ -211,10 +212,10 @@ namespace CommunityKitchen
 
 		internal static void SetUpKitchen(CommunityCenter cc)
 		{
-			Helper.Content.InvalidateCache(@"LooseSprites/JunimoNote");
-			Helper.Content.InvalidateCache(@"Maps/townInterior");
-			Helper.Content.InvalidateCache(@"Strings/Locations");
-			Helper.Content.InvalidateCache(@"Strings/UI");
+			Helper.GameContent.InvalidateCache(@"LooseSprites/JunimoNote");
+			Helper.GameContent.InvalidateCache(@"Maps/townInterior");
+			Helper.GameContent.InvalidateCache(@"Strings/Locations");
+			Helper.GameContent.InvalidateCache(@"Strings/UI");
 
 			// Set tiles used for opening/closing fridge
 			Kitchen.FridgeTilesToUse = Helper.ModRegistry.IsLoaded("FlashShifter.StardewValleyExpandedCP") ? "SVE" : "Vanilla";
@@ -236,7 +237,7 @@ namespace CommunityKitchen
             // Update fridge chest object if null
             if (!cc.Objects.TryGetValue(Kitchen.FridgeChestPosition, out StardewValley.Object o) || o is not Chest chest)
             {
-                chest = new Chest(playerChest: true, tileLocation: Kitchen.FridgeChestPosition, parentSheetIndex: 216);
+                chest = new Chest(playerChest: true, tileLocation: Kitchen.FridgeChestPosition, itemId: "216");
                 chest.fridge.Value = true;
                 cc.Objects[Kitchen.FridgeChestPosition] = chest;
             }
@@ -314,7 +315,7 @@ namespace CommunityKitchen
 			// Try opening the cooking menu via Esca's Modding Plugins
 			xTile.Dimensions.Location location = new ((int)tilePosition.X, (int)tilePosition.Y);
 			if (Kitchen.EMPTileActionKitchen != null
-				&& cc.performAction(action: Kitchen.EMPTileActionKitchen, who: Game1.player, tileLocation: location))
+				&& cc.performAction(fullActionString: Kitchen.EMPTileActionKitchen, who: Game1.player, tileLocation: location))
 				return;
 
 			// Try opening a cooking menu using our own logic otherwise
@@ -344,8 +345,8 @@ namespace CommunityKitchen
 						width: dimensions.X,
 						height: dimensions.Y,
 						cooking: true,
-						standalone_menu: true,
-						material_containers: new List<Chest> { fridge })
+						standaloneMenu: true,
+						materialContainers: new List<IInventory> { fridge.Items })
 					{
 						exitFunction = delegate
                         {

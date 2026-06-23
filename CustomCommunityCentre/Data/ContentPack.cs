@@ -112,7 +112,7 @@ namespace CustomCommunityCentre.Data
 					foreach ((string sprite, string filename, string absoluteFilename, string assetKey) in filenames)
                     {
 						// Force unique names on bundle spritesheet files
-						contentPack.Spritesheets.Add(key: assetKey, value: source.LoadAsset<Texture2D>(Path.GetFileName(absoluteFilename)));
+						contentPack.Spritesheets.Add(key: assetKey, value: source.ModContent.Load<Texture2D>(Path.GetFileName(absoluteFilename)));
 						Log.D($"Found spritesheet: {filename} ({assetKey})",
 							CustomCommunityCentre.ModEntry.Config.DebugMode);
 					}
@@ -127,7 +127,7 @@ namespace CustomCommunityCentre.Data
 						{
 							Log.E($"Spritesheet for content pack {source.Manifest.UniqueID} was not loaded:"
 								+ $" No matching '{sprite}{ext}' asset for entry"
-								+ $" \"{nameof(StardewValley.GameData.BundleData.Sprite)}\": \"{sprite}\""
+								+ $" \"{nameof(StardewValley.GameData.Bundles.BundleData.Sprite)}\": \"{sprite}\""
 								+ $"{Environment.NewLine}(HINT: check TRACE logs for found spritesheets.)");
 							return null;
 						}

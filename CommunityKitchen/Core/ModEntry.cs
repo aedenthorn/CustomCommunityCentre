@@ -21,8 +21,7 @@ namespace CommunityKitchen
 			GusDeliveryService.AddConsoleCommands(cmd: ModEntry.CommandPrefix);
 
 			AssetManager assetManager = new();
-			helper.Content.AssetLoaders.Add(assetManager);
-			helper.Content.AssetEditors.Add(assetManager);
+			AssetManager.RegisterEvents();
 		}
 
 		private void RegisterEvents()

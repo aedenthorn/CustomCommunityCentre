@@ -47,16 +47,16 @@ namespace CommunityKitchen
 		private static readonly Rectangle PlateSourceArea = new(0, 48 + 8, 24, 24);
 
 
-		public ShopMenuNoInventory(Dictionary<ISalable, int[]> itemPriceAndStock, int currency = 0, string who = null,
-			Func<ISalable, Farmer, int, bool> on_purchase = null, Func<ISalable, bool> on_sell = null, string context = null)
-			: base(itemPriceAndStock, currency, who, on_purchase, on_sell, context)
+		public ShopMenuNoInventory(Dictionary<ISalable, ItemStockInformation> itemPriceAndStock, int currency = 0, string who = null,
+			OnPurchaseDelegate on_purchase = null, Func<ISalable, bool> on_sell = null, string context = null)
+			: base("Saloon", itemPriceAndStock.Keys.ToList(), currency, who, on_purchase, on_sell, true)
 		{
 			this.SetOrderArea();
 		}
 
 		public ShopMenuNoInventory(List<ISalable> itemsForSale, int currency = 0, string who = null,
-			Func<ISalable, Farmer, int, bool> on_purchase = null, Func<ISalable, bool> on_sell = null, string context = null)
-			: base(itemsForSale, currency, who, on_purchase, on_sell, context)
+			OnPurchaseDelegate on_purchase = null, Func<ISalable, bool> on_sell = null, string context = null)
+			: base("Saloon", itemsForSale, currency, who, on_purchase, on_sell, true)
 		{
 			this.SetOrderArea();
 		}
@@ -212,9 +212,9 @@ namespace CommunityKitchen
 			string boldTitleText = ModEntry.Instance.Helper.Reflection
 				.GetField<string>(obj: this, name: "boldTitleText")
 				.GetValue();
-			int extraItemIndex = ModEntry.Instance.Helper.Reflection
+			string extraItemIndex = ModEntry.Instance.Helper.Reflection
 				.GetMethod(obj: this, name: "getHoveredItemExtraItemIndex")
-				.Invoke<int>();
+				.Invoke<string>();
 			int extraItemAmount = ModEntry.Instance.Helper.Reflection
 				.GetMethod(obj: this, name: "getHoveredItemExtraItemAmount")
 				.Invoke<int>();

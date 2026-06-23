@@ -201,7 +201,7 @@ namespace CustomCommunityCentre
 			{
 				new List<string> { "ccDoorUnlock", "seenJunimoNote", "wizardJunimoNote", "canReadJunimoText" }
 					.ForEach(id => Game1.player.mailReceived.Add(id));
-				new List<int> { (int)Bundles.EventIds.CommunityCentreUnlocked }
+				new List<string> { Bundles.EventIds.CommunityCentreUnlocked.ToString() }
 					.ForEach(id => Game1.player.eventsSeen.Add(id));
 				Game1.player.increaseBackpackSize(24);
 				int areaNumber = Bundles.GetAreaNumberFromCommandArgs(args);
@@ -217,7 +217,7 @@ namespace CustomCommunityCentre
 			{
 				new List<string> { "ccDoorUnlock", "JojaGreeting", "JojaMember" }
 					.ForEach(id => Game1.player.mailReceived.Add(id));
-				new List<int> { (int)Bundles.EventIds.CommunityCentreUnlocked }
+				new List<string> { Bundles.EventIds.CommunityCentreUnlocked.ToString() }
 					.ForEach(id => Game1.player.eventsSeen.Add(id));
 
 				Log.D("Joja set up.");
@@ -402,7 +402,7 @@ namespace CustomCommunityCentre
 			if ((!(e.NewLocation is CommunityCenter) && e.OldLocation is CommunityCenter)
 				|| (!(e.OldLocation is CommunityCenter) && e.NewLocation is CommunityCenter))
 			{
-				Helper.Content.InvalidateCache(@"Maps/townInterior");
+				Helper.GameContent.InvalidateCache(@"Maps/townInterior");
 			}
 		}
 
@@ -460,11 +460,11 @@ namespace CustomCommunityCentre
 				return false;
 
 			// Check completion cutscenes
-			bool cutsceneSeen = new int[]
+			bool cutsceneSeen = new string[]
 			{
-				(int)Bundles.EventIds.CommunityCentreComplete,
-				(int)Bundles.EventIds.JojaWarehouseComplete
-			}
+				Bundles.EventIds.CommunityCentreComplete.ToString(),
+				Bundles.EventIds.JojaWarehouseComplete.ToString()
+            }
 			.Any(id => Game1.MasterPlayer.eventsSeen.Contains(id));
 
 			// Check post-completion mail flags
@@ -693,24 +693,24 @@ namespace CustomCommunityCentre
 			int itemLimit = split.Length < 5 ? 99 : int.Parse(split[4]);
 			for (int i = 0; i < itemData.Length && i < itemLimit * 3; ++i)
 			{
-				int index = int.Parse(itemData[i]);
+				string id = itemData[i];
 				int quantity = int.Parse(itemData[++i]);
 				int quality = int.Parse(itemData[++i]);
-				if (index == -1)
+				if (id == "-1")
 				{
 					Game1.player.addUnearnedMoney(quantity);
 				}
 				else
 				{
-					if (index < 0)
+					if (int.TryParse(id, out var index) && index < 0)
                     {
 						// Get object from category, hopefully avoiding dud item definitions
-						index = Game1.objectInformation
-							.LastOrDefault(pair => int.TryParse(pair.Value.Split('/')[3].Split(' ').Last(), out int i) && index == i).Key;
+						id = Game1.objectData
+							.LastOrDefault(pair => index == pair.Value.Category).Key;
                     }
 					Game1.createItemDebris(
-						item: new StardewValley.Object(index, quantity, isRecipe: false, price: -1, quality: quality),
-						origin: Game1.player.Position,
+						item: new StardewValley.Object(id, quantity, isRecipe: false, price: -1, quality: quality),
+						pixelOrigin: Game1.player.Position,
 						direction: -1);
 				}
 			}
@@ -837,7 +837,7 @@ namespace CustomCommunityCentre
 
 		internal static void SetUpJunimosForGoodbyeDance(CommunityCenter cc)
 		{
-			List<Junimo> junimos = cc.getCharacters().OfType<Junimo>().ToList();
+			List<Junimo> junimos = cc.characters.OfType<Junimo>().ToList();
 			Vector2 min = new (junimos.Min(j => j.Position.X), junimos.Min(j => j.Position.Y));
 			Vector2 max = new (junimos.Max(j => j.Position.X), junimos.Max(j => j.Position.Y));
 			for (int i = 0; i < Bundles.CustomAreaNamesAndNumbers.Count; ++i)

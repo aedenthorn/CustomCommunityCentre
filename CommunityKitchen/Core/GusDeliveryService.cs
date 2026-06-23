@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
+using StardewValley.Internal;
 using StardewValley.Menus;
 using StardewValley.Objects;
 using StardewValley.Util;
@@ -93,7 +94,7 @@ namespace CommunityKitchen
 		private static void GameLoop_TimeChanged(object sender, TimeChangedEventArgs e)
 		{
 			if (GusDeliveryService.ItemDeliveryChest.IsValueCreated
-				&& GusDeliveryService.ItemDeliveryChest.Value.items.Any()
+				&& GusDeliveryService.ItemDeliveryChest.Value.Items.Any()
 				&& !(Game1.activeClickableMenu is CommunityKitchen.ShopMenuNoInventory)
 				&& (e.NewTime < GusDeliveryService.SaloonOpeningTime
 					|| e.NewTime > GusDeliveryService.SaloonClosingTime
@@ -257,14 +258,14 @@ namespace CommunityKitchen
 				else
 				{
 					Game1.currentLocation.playSound("Ship");
-					foreach (Item item in chest.items)
+					foreach (Item item in chest.Items)
 					{
 						if (item != null)
 						{
 							Game1.createItemDebris(item, chest.TileLocation * Game1.tileSize, -1, location);
 						}
 					}
-					chest.items.Clear();
+					chest.Items.Clear();
 					chest.clearNulls();
 
 					TemporaryAnimatedSprite sprite = new (
@@ -308,19 +309,27 @@ namespace CommunityKitchen
 
 		internal static void OpenDeliveryMenu()
 		{
-			// Open a limited-stock saloon shop for the player
-			Dictionary<ISalable, int[]> itemPriceAndStock = Utility.getSaloonStock()
-				.Where(pair => pair.Key is Item i && (i is not StardewValley.Object o || !o.IsRecipe))
-				.ToDictionary(pair => pair.Key, pair => pair.Value);
+            if (!DataLoader.Shops(Game1.content).TryGetValue("Saloon", out var shop))
+            {
+                return;
+            }
+
+			var stock = ShopBuilder.GetShopStock("Saloon", shop);
+
+            // Open a limited-stock saloon shop for the player
+            Dictionary<ISalable, ItemStockInformation> itemPriceAndStock = stock
+				.Where(kvp => !kvp.Key.IsRecipe)
+				.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 
 			CommunityKitchen.ShopMenuNoInventory shopMenu = new (
 				itemPriceAndStock: itemPriceAndStock,
 				currency: 0,
 				who: GusDeliveryService.ShopOwner,
-				on_purchase: delegate (ISalable item, Farmer farmer, int amount)
+				on_purchase: new(delegate(ISalable item, Farmer farmer, int amount, ItemStockInformation info)
 				{
 					Game1.player.team.synchronizedShopStock.OnItemPurchased(
-						shop: SynchronizedShopStock.SynchedShop.Saloon,
+						shop_id: "Saloon",
+						stock: stock,
 						item: item,
 						amount: amount);
 
@@ -332,7 +341,8 @@ namespace CommunityKitchen
 					GusDeliveryService.ItemDeliveryChest.Value.addItem(i);
 
 					return false;
-				});
+				})
+			);
 			shopMenu.exitFunction = delegate
 			{
 				if (shopMenu.DeliveryItemsAndCounts.Any())
@@ -357,7 +367,7 @@ namespace CommunityKitchen
 					string message = ModEntry.i18n.Get(
 						key: $"{key}{whichMessage}",
 						tokens: new { ItemName = item.DisplayName });
-					Game1.drawDialogue(speaker: shopMenu.portraitPerson, dialogue: message);
+					Game1.DrawDialogue(new Dialogue(Game1.getCharacterFromName("Gus"), key, message));
 				}
 			};
 			Game1.activeClickableMenu = shopMenu;
@@ -373,7 +383,7 @@ namespace CommunityKitchen
 				tilePosition: mailboxPosition,
 				o: new Chest(),
 				maxIterations: 100);
-			Chest deliveryChest = new (coins: 0, items: GusDeliveryService.ItemDeliveryChest.Value.items.ToList(), location: chestPosition, giftbox: true);
+			Chest deliveryChest = new (items: GusDeliveryService.ItemDeliveryChest.Value.Items.ToList(), location: chestPosition, giftbox: true);
 			deliveryChest.modData[GusDeliveryService.ItemDeliveryModDataKey] = Game1.player.UniqueMultiplayerID.ToString();
 			farm.Objects.Add(chestPosition, deliveryChest);
 
@@ -387,7 +397,7 @@ namespace CommunityKitchen
 
 		internal static void ResetDelivery()
 		{
-			GusDeliveryService.ItemDeliveryChest.Value.items.Clear();
+			GusDeliveryService.ItemDeliveryChest.Value.Items.Clear();
 			GusDeliveryService.DeliveryStartTime = GusDeliveryService.DeliveryEndTime = -1;
 		}
 	}

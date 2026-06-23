@@ -19,12 +19,13 @@ namespace CustomCommunityCentre
 
 		public readonly NetInt WhichEvent = new();
 
-		public NetFields NetFields { get; } = new();
+		public NetFields NetFields { get; }
 
 
 		public AreaCompleteNightEvent()
 		{
-			this.NetFields.AddField(WhichEvent);
+			this.NetFields = new NetFields(base.GetType().Name).SetOwner(this);
+            this.NetFields.AddField(WhichEvent);
 		}
 
 		public AreaCompleteNightEvent(int which)
@@ -103,7 +104,7 @@ namespace CustomCommunityCentre
 						yPeriodic = cutsceneJunimo.FloatVertically,
 						yPeriodicLoopTime = periodicLoopTime,
 						yPeriodicRange = periodicRange,
-						light = bundleMetadata.AreaCompleteCutscene.DrawEffects,
+						lightId = bundleMetadata.AreaCompleteCutscene.DrawEffects ? "AreaCompleteNightEvent" + i : null,
 						lightcolor = Color.DarkGoldenrod,
 						lightRadius = 1f - (1f / 10000f * i)
 					});
@@ -112,12 +113,12 @@ namespace CustomCommunityCentre
 			// Set effects
 			if (bundleMetadata.AreaCompleteCutscene.DrawEffects)
 			{
-				LightSource lightSource = new (
-					textureIndex: 4,
+				LightSource lightSource = new ("AreaCompleteCutscene",
+                    textureIndex: 4,
 					position: Utility.PointToVector2(targetTile) * Game1.tileSize,
 					radius: 4f,
 					color: Color.DarkGoldenrod);
-				Game1.currentLightSources.Add(lightSource);
+				Game1.currentLightSources["AreaCompleteCutscene"] = lightSource;
 				Utility.addSprinklesToLocation(this.Location, targetTile.X, targetTile.Y, 7, 4, 15000, 150, Color.LightCyan);
 				Utility.addStarsAndSpirals(this.Location, targetTile.X + 1, targetTile.Y, 7, 4, 15000, 350, Color.White);
 			}
